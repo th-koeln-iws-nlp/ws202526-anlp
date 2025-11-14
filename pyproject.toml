@@ -23,7 +23,12 @@ dependencies = [
 
 
 [dependency-groups]
-dev = ["black>=25.1.0", "jupyter>=1.1.1", "ruff>=0.12.1", "marimo>=0.14.9"]
+dev = [
+    "black>=25.1.0",
+    "jupyter>=1.1.1",
+    "ruff>=0.12.1",
+    "marimo>=0.14.9",
+]
 
 
 [tool.ruff]

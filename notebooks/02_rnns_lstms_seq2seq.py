@@ -7,7 +7,6 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     import marimo as mo
-    import numpy as np
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
@@ -19,58 +18,10 @@ def _():
 
 
 @app.cell
-def _(mo):
-    mo.md("""
-    # RNNs, LSTMs & Seq2Seq Models
-
-    In this notebook, we'll explore:
-    - How RNNs process sequences
-    - Why LSTMs solve the vanishing gradient problem
-    - Sequence-to-Sequence (Seq2Seq) architecture
-    - Applications to text simplification
-    """)
-    return
-
-
-@app.cell
-def _(mo):
-    mo.md("""
-    ## Part 1: Recurrent Neural Networks (RNNs)
-
-    ### The Key Idea: Recurrence + Memory
-
-    An RNN processes sequences one element at a time, maintaining a **hidden state**
-    that acts as memory:
-
-    ```
-    h_t = tanh(W_hh * h_{t-1} + W_xh * x_t + b_h)
-    y_t = W_hy * h_t + b_y
-    ```
-
-    Where:
-    - `h_t` = hidden state at time step t (the "memory")
-    - `x_t` = input at time step t (current word)
-    - `y_t` = output at time step t
-    - `W_*` = weight matrices (shared across all time steps!)
-
-    ### RNN Architectures
-
-    RNNs can be configured for different tasks:
-
-    1. **Many-to-One**: Sequence → Single output (e.g., sentiment classification)
-    2. **One-to-Many**: Single input → Sequence (e.g., image captioning)
-    3. **Many-to-Many (same length)**: Sequence → Sequence (e.g., POS tagging)
-    4. **Many-to-Many (different length)**: Sequence → Sequence (**Seq2Seq!**)
-    """)
-    return
-
-
-@app.cell
 def _(nn, torch):
-    # Simple RNN implementation from scratch
-    class SimpleRNN(nn.Module):
+    class RNN(nn.Module):
         def __init__(self, input_size, hidden_size, output_size):
-            super(SimpleRNN, self).__init__()
+            super(RNN, self).__init__()
             self.hidden_size = hidden_size
 
             # Input to hidden weights
@@ -85,6 +36,7 @@ def _(nn, torch):
             hidden: shape (batch_size, hidden_size)
             """
             # Concatenate input and hidden state
+            # This is mathematically equivalent to having two matrices and adding their results
             combined = torch.cat((input, hidden), 1)
             # Compute new hidden state
             hidden = torch.tanh(self.i2h(combined))
@@ -98,7 +50,7 @@ def _(nn, torch):
 
 
     # Example: Create a simple RNN
-    rnn_demo = SimpleRNN(input_size=50, hidden_size=128, output_size=10)
+    rnn_demo = RNN(input_size=50, hidden_size=128, output_size=10)
     return
 
 
@@ -133,7 +85,7 @@ def _(nn, torch):
             # embedded shape: (batch_size, seq_len, embedding_dim)
 
             # Pass through LSTM
-            output, (hidden, cell) = self.lstm(embedded)
+            _, (hidden, _) = self.lstm(embedded)
             # output shape: (batch_size, seq_len, hidden_dim)
             # hidden shape: (n_layers, batch_size, hidden_dim)
             # cell shape: (n_layers, batch_size, hidden_dim)
@@ -179,60 +131,22 @@ def _(nn, torch):
 
 
 @app.cell
-def _(mo):
-    mo.md("""
-    ## Part 4: Sequence-to-Sequence (Seq2Seq) Models
-
-    Now for the **main topic of this lecture**: How do we transform one sequence into another?
-
-    ### The Challenge
-
-    Many NLP tasks require mapping sequences of different lengths:
-
-    - **Machine Translation**: "Hello" → "Hola"
-    - **Summarization**: Long article → Short summary
-    - **Text Simplification**: Complex → Simple sentence (our challenge!)
-    - **Question Answering**: Question + Context → Answer
-
-    ### The Seq2Seq Architecture
-
-    **Key Idea:** Use TWO RNNs/LSTMs:
-
-    1. **Encoder**: Reads input sequence, produces fixed-size context vector
-    2. **Decoder**: Generates output sequence from context vector
-
-    ```
-    Input:  x₁ x₂ x₃ <EOS>
-             ↓  ↓  ↓   ↓
-    Encoder: h₁→h₂→h₃→h₄  → context vector (c)
-                              ↓
-    Decoder:              h₁'→h₂'→h₃' → <EOS>
-                          ↓   ↓   ↓
-    Output:              y₁  y₂  y₃
-    ```
-
-    The context vector `c` is the **compressed representation** of the input!
-    """)
-    return
-
-
-@app.cell
 def _(nn, torch):
     # Seq2Seq Encoder
     class Encoder(nn.Module):
         def __init__(
-            self, input_size, embedding_dim, hidden_dim, n_layers=1, dropout=0.5
+            self, input_size, embedding_dim, hidden_dim, n_layers: int = 1, dropout=0.5
         ):
             super().__init__()
             self.hidden_dim = hidden_dim
-            self.n_layers = n_layers
+            self.n_layers: int = n_layers
 
             self.embedding = nn.Embedding(input_size, embedding_dim)
             self.lstm = nn.LSTM(
                 embedding_dim,
                 hidden_dim,
                 n_layers,
-                dropout=dropout,
+                dropout=dropout if n_layers > 1 else 0,
                 batch_first=True,
             )
             self.dropout = nn.Dropout(dropout)
@@ -242,7 +156,7 @@ def _(nn, torch):
             embedded = self.dropout(self.embedding(src))
             # embedded shape: (batch_size, src_len, embedding_dim)
 
-            outputs, (hidden, cell) = self.lstm(embedded)
+            _, (hidden, cell) = self.lstm(embedded)
             # hidden shape: (n_layers, batch_size, hidden_dim)
             # cell shape: (n_layers, batch_size, hidden_dim)
 
@@ -252,19 +166,19 @@ def _(nn, torch):
     # Seq2Seq Decoder
     class Decoder(nn.Module):
         def __init__(
-            self, output_size, embedding_dim, hidden_dim, n_layers=1, dropout=0.5
+            self, output_size, embedding_dim, hidden_dim, n_layers: int=1, dropout=0.5
         ):
             super().__init__()
             self.output_size = output_size
             self.hidden_dim = hidden_dim
-            self.n_layers = n_layers
+            self.n_layers: int = n_layers
 
             self.embedding = nn.Embedding(output_size, embedding_dim)
             self.lstm = nn.LSTM(
                 embedding_dim,
                 hidden_dim,
                 n_layers,
-                dropout=dropout,
+                dropout=dropout if n_layers > 1 else 0,
                 batch_first=True,
             )
             self.fc_out = nn.Linear(hidden_dim, output_size)
@@ -329,7 +243,7 @@ def _(nn, torch):
 @app.cell
 def _(mo):
     mo.md("""
-    ## Part 5: Training on ASSET Dataset
+    ## Training on ASSET Dataset
 
     Now let's train a real Seq2Seq model on the ASSET text simplification dataset!
 
@@ -477,7 +391,6 @@ def _(torch):
     print("Data loading utilities created!")
     return (
         PAD_TOKEN,
-        Path,
         SOS_TOKEN,
         SimplificationDataset,
         Vocabulary,
@@ -487,27 +400,33 @@ def _(torch):
 
 
 @app.cell
+def _(mo):
+    data_path = mo.ui.file_browser(selection_mode="directory", multiple=False)
+    data_path
+    return (data_path,)
+
+
+@app.cell
+def _(data_path):
+    print(data_path.path(index=0))
+    return
+
+
+@app.cell
 def _(
-    Path,
     SimplificationDataset,
     Vocabulary,
     collate_fn,
+    data_path,
     load_data,
     mo,
     torch,
 ):
-    # Load and prepare data
-    data_path = Path("data/asset")
-
-    # Load ASSET data using existing splits
-    # Using simplification index 0 (first simplification)
-    # Validation set as training data (use all samples)
     train_data = load_data(
-        data_path, split="valid", simplification_idx=0, max_samples=None
+        data_path.path(index=0), split="valid", simplification_idx=0, max_samples=None
     )
 
-    # Test set for evaluation
-    test_data = load_data(data_path, split="test", simplification_idx=0)
+    test_data = load_data(data_path.path(index=0), split="test", simplification_idx=0)
 
     # Build vocabularies from training data only
     src_vocab = Vocabulary(min_freq=2)
@@ -517,6 +436,8 @@ def _(
     tgt_vocab.build_vocab([tgt for _, tgt in train_data])
 
     # Create datasets
+    # Test data also uses training vocabularies 
+    # This causes OUT-OF-VOCAB issues if new words appear in test set (see later)
     train_dataset = SimplificationDataset(train_data, src_vocab, tgt_vocab)
     test_dataset = SimplificationDataset(test_data, src_vocab, tgt_vocab)
 

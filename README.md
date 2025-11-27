@@ -5,9 +5,7 @@ This is the GitHub Repository for the ANLP course in the winter term 2025/26. He
 ## Requirements & Grading
 
 The exam and grade consists of
-- Code implementation of all discussed milestones (30%, per team)
-    - Code needs to be functioning and explained via comments
-- A short (max 2 pages) report (pdf format) on the implementation, results and the work done by the team members (20%, per team)
+- A short (max 2 pages) report (pdf format) on the implementation, results and the work done by the team members, along with well-documented notebooks and code (50%, per team)
 - A 10 minute oral presentation per team member on their individual work on the 15th of January 2026 (50%, individual)
 
 The final code and report has to be ready in your team's GitHub Repo by the 16th of January 2026, 6pm.
@@ -39,7 +37,7 @@ You can find the [trial data](./data/tsar2025_trialdata.jsonl) in our repository
 | 1       | 03.12.2025 | Introduction & NLP Recap   | Organization, the challenge, word embeddings     |
 | 2       | 04.12.2025 | RNNs and LSTMs   | First sequence to sequence neural networks with memory     |
 | 3       | 10.12.2025 | Attentions & Transformers   | Transformer architecture, parallalization in NLP, encoder & decoder blocks     |
-| 4       | 11.12.2025 | Encoder & Decoder Models   | BERT, GPT     |
+| 4       | 11.12.2025 | Encoder & Decoder Models   | BERT, GPT, T5, BART     |
 | 5       | 17.12.2025 | Hackathon / Check-In   |     |
 | 6       | 18.12.2025 | LLM Architecture   | From decoder models to LLMs, the LLM landscape (closed and open source)     |
 | 7       | 07.01.2026 | LLM Engineering   | prompt engineering, retrieval augmented generation (RAG), evaluating LLMs     |

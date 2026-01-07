@@ -150,9 +150,9 @@ def _(tokenizer):
             truncation=True,
             padding="max_length",
         )
-        labels["input_ids"] = [
-            [(l if l != tokenizer.pad_token_id else -100) for l in label] for label in labels["input_ids"]
-        ]
+        # labels["input_ids"] = [
+        #     [(l if l != tokenizer.pad_token_id else -100) for l in label] for label in labels["input_ids"]
+        # ]
 
         model_inputs["labels"] = labels["input_ids"]
 
@@ -182,13 +182,11 @@ def _(AutoModelForSeq2SeqLM):
 
 @app.cell
 def _(DataCollatorForSeq2Seq, model_t5, tokenizer):
-    label_pad_token_id = -100
+    # label_pad_token_id = -100
     # Data collator
     data_collator = DataCollatorForSeq2Seq(
         tokenizer,
         model=model_t5,
-        label_pad_token_id=label_pad_token_id,
-        pad_to_multiple_of=8
     )
     return (data_collator,)
 

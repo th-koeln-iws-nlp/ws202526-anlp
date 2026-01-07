@@ -1,7 +1,7 @@
 import marimo
 
 __generated_with = "0.18.0"
-app = marimo.App(width="full")
+app = marimo.App(width="full", layout_file="layouts/05_intro_llms.slides.json")
 
 
 @app.cell
@@ -152,11 +152,11 @@ def _(
     text_input,
     top_p_slider,
 ):
-    from litellm import completion as gemini_completion
+    from litellm import completion
 
     # Use the selected Gemini model
     if gemini_dropdown.value and text_input.value:
-        gemini_response = gemini_completion(
+        gemini_response = completion(
             model=f"vertex_ai/{gemini_dropdown.value}",
             messages=[
                 {
@@ -175,7 +175,7 @@ def _(
         )
 
         gemini_simplified = gemini_response.choices[0].message.content
-    return (gemini_simplified,)
+    return completion, gemini_simplified
 
 
 @app.cell
